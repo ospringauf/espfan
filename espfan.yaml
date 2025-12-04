@@ -10,6 +10,7 @@ substitutions:
   temp_max: "45.0"  # Temperature at which fan reaches 100% speed
   temp_hysteresis: "2.0"  # Temperature hysteresis to prevent rapid cycling
   rpm_multiplier: "0.5"  # RPM calculation multiplier (typically 0.5 for 2 pulses/rev)
+  fan_min_power: "0.20"  # Minimum PWM power (20%) - prevents fan buzzing at low speeds
 
 # Enable logging
 logger:
@@ -44,7 +45,7 @@ output:
     pin: GPIO25
     id: fan_pwm
     frequency: 25000 Hz
-    min_power: 0.0
+    min_power: ${fan_min_power}  # Minimum 20% - fan won't spin below this
     max_power: 1.0
 
 # Fan control with speed
@@ -53,6 +54,7 @@ fan:
     output: fan_pwm
     name: "Fan"
     id: fan_control
+    zero_means_zero: true  # When speed=0%, turn off completely (ignore min_power)
 
 # DHT22 Temperature and Humidity Sensor
 sensor:
