@@ -1,8 +1,11 @@
 esphome:
   name: espfan
   friendly_name: ESP Fan
-  platform: ESP32
+
+esp32:
   board: esp32dev
+  framework:
+    type: esp-idf
 
 # Substitutions for easy configuration
 substitutions:
@@ -18,11 +21,11 @@ logger:
 # Enable Home Assistant API
 api:
   encryption:
-    key: !secret api_encryption_key
+    key: !secret api_key
 
 ota:
   - platform: esphome
-    password: !secret ota_password
+    password: !secret ota_pw
 
 wifi:
   ssid: !secret wifi_ssid
@@ -31,9 +34,10 @@ wifi:
   # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
     ssid: "Espfan Fallback Hotspot"
-    password: !secret ap_password
+    password: !secret hotspot_pw
 
 captive_portal:
+
 
 # Web server (optional, for debugging)
 web_server:

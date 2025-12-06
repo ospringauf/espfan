@@ -7,14 +7,13 @@ esp32:
   framework:
     type: esp-idf
 
-
 # Substitutions for easy configuration
 substitutions:
   temp_min: "30.0"  # Temperature at which fan starts (0% speed)
   temp_max: "45.0"  # Temperature at which fan reaches 100% speed
   temp_hysteresis: "2.0"  # Temperature hysteresis to prevent rapid cycling
   rpm_multiplier: "0.5"  # RPM calculation multiplier (typically 0.5 for 2 pulses/rev)
-  fan_min_power: "0.20"  # Minimum PWM power (20%) - prevents fan buzzing at low speeds
+  fan_min_power: "0.2"  # Minimum PWM power (20%) - prevents fan buzzing at low speeds
 
 # Enable logging
 logger:
@@ -51,6 +50,7 @@ output:
     frequency: 25000 Hz
     min_power: ${fan_min_power}  # Minimum 20% - fan won't spin below this
     max_power: 1.0
+    zero_means_zero: true  # When speed=0%, turn off completely (ignore min_power)
 
 # Fan control with speed
 fan:
@@ -58,55 +58,9 @@ fan:
     output: fan_pwm
     name: "Fan"
     id: fan_control
-    zero_means_zero: true  # When speed=0%, turn off completely (ignore min_power)
 
 # DHT22 Temperature and Humidity Sensor
 sensor:
-  - platform: dht
-    pin: GPIO22
-    model: DHT22
-    temperature:
-      name: "Temperature"
-      id: temperature
-      on_value:
-        then:
-          - if:
-              condition:
-                switch.is_on: auto_mode
-              then:
-                - lambda: |-
-                    float temp = id(temperature).state;
-                    float speed = 0.0;
-                    float temp_min = ${temp_min};
-                    float temp_max = ${temp_max};
-                    float hysteresis = ${temp_hysteresis};
-                    
-                    // Apply hysteresis based on current fan state
-                    bool fan_is_on = id(fan_control).state;
-                    float effective_min = fan_is_on ? temp_min - hysteresis : temp_min;
-                    
-                    if (temp >= temp_max) {
-                      speed = 1.0;  // 100% at temp_max and above
-                    } else if (temp > effective_min) {
-                      // Linear interpolation between temp_min (0%) and temp_max (100%)
-                      speed = (temp - temp_min) / (temp_max - temp_min);
-                      speed = max(0.0f, min(1.0f, speed));  // Clamp to 0-1 range
-                    } else {
-                      speed = 0.0;  // 0% at temp_min and below
-                    }
-                    
-                    if (speed > 0.0) {
-                      auto call = id(fan_control).turn_on();
-                      call.set_speed(static_cast<int>(speed * 100));
-                      call.perform();
-                    } else {
-                      id(fan_control).turn_off().perform();
-                    }
-    humidity:
-      name: "Humidity"
-      id: humidity
-    update_interval: 10s
-
   - platform: pulse_counter
     pin: 
       number: GPIO26

@@ -2,6 +2,8 @@
 
 ESPHome-based fan controller for two 12V PWM fans integrated with Home Assistant.
 
+!!! Disclaimer: this is work in progress, untested, mostly AI generated !!!
+
 ## Hardware
 
 - ESP32 Dev Board (generic)
@@ -57,10 +59,10 @@ ESPHome-based fan controller for two 12V PWM fans integrated with Home Assistant
 ### Fan Connections (typical 4-pin PWM fans)
 
 Each fan has 4 wires:
-1. **Black** - Ground (GND) → Connect to 12V power supply GND and ESP32 GND
-2. **Red** - +12V → Connect to 12V power supply positive
-3. **Yellow** - Tachometer signal → Connect to GPIO26 (Fan 1) or GPIO27 (Fan 2)
-4. **Blue** - PWM control → Connect both fans' PWM wires together to GPIO25
+1. **Black** (black) - Ground (GND) → Connect to 12V power supply GND and ESP32 GND
+2. **Red** (yellow) - +12V → Connect to 12V power supply positive
+3. **Yellow** (green) - Tachometer signal → Connect to GPIO26 (Fan 1) or GPIO27 (Fan 2)
+4. **Blue** (blue) - PWM control → Connect both fans' PWM wires together to GPIO25
 
 ### Power Supply
 
