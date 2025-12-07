@@ -1,0 +1,73 @@
+---
+# Sync target temperatures between two thermostats:
+# - climate.vtherm1
+# - climate.beok_thermostat
+# Uses `input_boolean.guard_sync_thermostats` as a guard to prevent trigger loops.
+
+alias: sync_vtherm1_to_beok
+description: "Propagate setpoint changes from VTherm1 to beok_thermostat"
+trigger:
+  - platform: state
+    entity_id: climate.vtherm1
+    attribute: temperature
+    for: "00:00:05"
+condition:
+  - condition: state
+    entity_id: input_boolean.guard_sync_thermostats
+    state: 'off'
+  - condition: template
+    # Only act when the other thermostat's target differs by > 0.1
+    value_template: >-
+      {{ (state_attr('climate.beok_thermostat','temperature') | float(0) -
+      state_attr('climate.vtherm1','temperature') | float(0)) | abs > 0.1 }}
+action:
+  - service: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.guard_sync_thermostats
+  - service: climate.set_temperature
+    target:
+      entity_id: climate.beok_thermostat
+    data:
+      temperature: "{{ state_attr('climate.vtherm1','temperature') }}"
+  - wait_template: >-
+      {{ (state_attr('climate.beok_thermostat','temperature')|float) ==
+      (state_attr('climate.vtherm1','temperature')|float) }}
+    timeout: "00:00:05"
+  - service: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.guard_sync_thermostats
+mode: single
+
+---
+alias: sync_beok_to_vtherm1
+description: "Propagate setpoint changes from beok_thermostat to VTherm1"
+trigger:
+  - platform: state
+    entity_id: climate.beok_thermostat
+    attribute: temperature
+    for: "00:00:05"
+condition:
+  - condition: state
+    entity_id: input_boolean.guard_sync_thermostats
+    state: 'off'
+  - condition: template
+    value_template: >-
+      {{ (state_attr('climate.vtherm1','temperature') | float(0) -
+      state_attr('climate.beok_thermostat','temperature') | float(0)) | abs > 0.1 }}
+action:
+  - service: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.guard_sync_thermostats
+  - service: climate.set_temperature
+    target:
+      entity_id: climate.vtherm1
+    data:
+      temperature: "{{ state_attr('climate.beok_thermostat','temperature') }}"
+  - wait_template: >-
+      {{ (state_attr('climate.vtherm1','temperature')|float) ==
+      (state_attr('climate.beok_thermostat','temperature')|float) }}
+    timeout: "00:00:05"
+  - service: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.guard_sync_thermostats
+mode: single

@@ -51,6 +51,7 @@ output:
     frequency: 25000 Hz
     min_power: ${fan_min_power}  # Minimum 20% - fan won't spin below this
     max_power: 1.0
+    zero_means_zero: true  # Ensure 0% truly turns output off
 
 # Fan control with speed
 fan:
@@ -58,7 +59,6 @@ fan:
     output: fan_pwm
     name: "Fan"
     id: fan_control
-    zero_means_zero: true  # When speed=0%, turn off completely (ignore min_power)
 
 # I2C Bus for BME280
 i2c:

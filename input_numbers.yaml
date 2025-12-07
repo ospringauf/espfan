@@ -1,0 +1,15 @@
+input_number:
+  beok_offset:
+    name: BEOK Temperature Offset
+    min: -9.9
+    max: 9.9
+    step: 0.1
+    unit_of_measurement: "°C"
+    mode: box
+  help_outdoor_temp:
+    name: Helper Outdoor Temperature
+    min: -40
+    max: 60
+    step: 0.1
+    unit_of_measurement: "°C"
+    mode: slider

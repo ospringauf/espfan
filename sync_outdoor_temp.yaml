@@ -1,0 +1,20 @@
+alias: Sync_outdoor_temp
+description: "temporary solution: use weather forecast instead of physical outdoor sensor"
+triggers:
+  - trigger: state
+    entity_id:
+      - weather.forecast_home
+    attribute: temperature
+    for:
+      hours: 0
+      minutes: 10
+      seconds: 0
+conditions: []
+actions:
+  - action: input_number.set_value
+    metadata: {}
+    data:
+      value: "{{ state_attr('weather.forecast_home', 'temperature') }}"
+    target:
+      entity_id: input_number.help_outdoor_temp
+mode: single

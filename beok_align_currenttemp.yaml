@@ -1,24 +1,13 @@
 alias: beok_align_currenttemp
 description: ""
 triggers:
-  - trigger: numeric_state
-    entity_id:
-      - climate.beok_thermostat
-    for:
-      hours: 0
-      minutes: 0
-      seconds: 5
+  - platform: state
+    entity_id: sensor.desk_temperature
+    for: "00:00:05"
+  - platform: state
+    entity_id: climate.beok_thermostat
     attribute: current_temperature
-    above: sensor.desk_temperature
-  - trigger: numeric_state
-    entity_id:
-      - climate.beok_thermostat
-    for:
-      hours: 0
-      minutes: 0
-      seconds: 5
-    attribute: current_temperature
-    below: sensor.desk_temperature
+    for: "00:00:05"
 conditions:
   - condition: template
     value_template: >-

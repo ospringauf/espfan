@@ -1,205 +1,77 @@
-# ESP Fan Controller
+# Apartment Temperature Control
 
-ESPHome-based fan controller for two 12V PWM fans integrated with Home Assistant.
+This repository contains configuration and documentation for an apartment temperature control system built around Home Assistant, Zigbee thermostats (TRVs), a BEOK display thermostat, and an ESP32-based fan controller running ESPHome.
 
-!!! Disclaimer: this is work in progress, untested, mostly AI generated !!!
+Purpose
+- Centralize climate control for two radiator TRVs
+- Provide a user-facing thermostat (BEOK) for setpoint changes and display
+- Improve radiator heat dispersion with two radiator-mounted fans controlled by an ESP32
 
-## Hardware
+Hardware (physical devices)
+- Sonoff TRVZB thermostatic radiator valves (two units: `TRVZB_vorne`, `TRVZB_hinten`)
+- BEOK BOT-R15W thermostat (`climate.beok_thermostat`) — used as a user interface only
+- SZ-T04 desk temperature sensor (`sensor.desk_temperature`) — used as the indoor reference sensor
+- Two 14cm PWM PC fans (tacho + PWM) mounted on the radiators (powered from 12V supply)
+- ESP32 development board running ESPHome (controls fans and reports temperature/RPM)
+- Raspberry Pi 5 running Home Assistant and Zigbee coordinator (Sonoff Zigbee dongle)
 
-- ESP32 Dev Board (generic)
-- Two 12V PWM fans with tachometer output
-- Temperature sensor (choose one):
-  - DHT22 temperature and humidity sensor (use `espfan.yaml`)
-  - BME280 temperature, humidity and pressure sensor (use `espfan_bme280.yaml`)
-- 12V power supply (sufficient current for both fans, typically 2-4A)
-- Buck converter module (12V → 5V):
-  - **Best**: MP2315 buck converter (3A, ~95% efficiency, low ripple)
-  - **Recommended**: XL4015 buck converter (5A, high current capability)
-  - **Good**: LM2596 buck converter (3A, widely available)
+Software stack
+- Home Assistant (running on Raspberry Pi)
+  - Zigbee2MQTT (Zigbee integration for Sonoff TRVs)
+  - ESPHome integration (for the ESP32 fan controller)
+- Versatile Thermostat integration (VTherm1) — https://github.com/jmcollin78/versatile_thermostat
+- ESPHome — https://esphome.io
+- Zigbee2MQTT — https://www.zigbee2mqtt.io
+- Home Assistant — https://www.home-assistant.io
 
-## Pin Assignment
+Entity mapping (in your HA instance)
+- `climate.vtherm1` — virtual thermostat (VTherm1) controlling TRV setpoints
+- `climate.beok_thermostat` — BEOK BOT-R15W thermostat (user-facing)
+- `climate.TRVZB_vorne` and `climate.TRVZB_hinten` — Sonoff TRVZB thermostats (controlled by VTherm1)
+- `sensor.desk_temperature` — SZ-T04 indoor sensor used as the temperature reference
+- `input_boolean.guard_sync_thermostats` — guard boolean preventing sync loops
+- Automations:
+  - `sync_thermostats.yaml` — `sync_vtherm1_to_beok` and `sync_beok_to_vtherm1` automations that propagate setpoints between the BEOK thermostat and VTherm1
+  - `beok_align_currenttemp.yaml` — calibration automation that aligns BEOK's displayed temperature with the indoor reference sensor
 
-### DHT22 Variant (espfan.yaml)
+Control logic summary
+- VTherm1 (`climate.vtherm1`) is the master for TRV control; VTherm1 controls `TRVZB_vorne` and `TRVZB_hinten`.
+- The BEOK device (`climate.beok_thermostat`) is used for user interactions (setpoint display and change). When the BEOK's setpoint changes the sync automation copies it to VTherm1, and vice versa.
+- `sensor.desk_temperature` (SZ-T04) is the indoor sensor used as the reference temperature for thermostats. The ESPHome temperature sensor on the ESP32 is NOT used for climate control (it is used for fan control only).
+- A future outdoor sensor may be integrated and fed into VTherm1 as required.
 
-| GPIO Pin | Function | Connection |
-|----------|----------|------------|
-| GPIO22 | DHT22 Data | Connect to DHT22 temperature sensor data pin |
-| GPIO25 | PWM Output | Connect to PWM input on both fans (parallel) |
-| GPIO26 | Tachometer 1 | Connect to tachometer wire of Fan 1 |
-| GPIO27 | Tachometer 2 | Connect to tachometer wire of Fan 2 |
+Notes about the fans and ESPHome
+- The ESP32 runs `espfan.yaml` / `espfan_bme280.yaml` for the fan controller; that documentation (wiring, substitutions, RPM multiplier, etc.) is in `README_fancontrol.md` and the `espfan*.yaml` files.
+- Both fans share the same PWM output (GPIO25) and therefore run at the same speed. 
 
-### BME280 Variant (espfan_bme280.yaml)
+Links and manuals
+- Versatile Thermostat (integration): https://github.com/jmcollin78/versatile_thermostat
+- ESPHome documentation: https://esphome.io
+- Home Assistant: https://www.home-assistant.io
+- Zigbee2MQTT: https://www.zigbee2mqtt.io
 
-| GPIO Pin | Function | Connection |
-|----------|----------|------------|
-| GPIO21 | I2C SDA | Connect to BME280 SDA pin |
-| GPIO22 | I2C SCL | Connect to BME280 SCL pin |
-| GPIO25 | PWM Output | Connect to PWM input on both fans (parallel) |
-| GPIO26 | Tachometer 1 | Connect to tachometer wire of Fan 1 |
-| GPIO27 | Tachometer 2 | Connect to tachometer wire of Fan 2 |
+Device-specific manuals / references
+- Sonoff TRVZB (Zigbee TRV series)
+    - https://help.sonoff.tech/docs/trvzb
+    - https://www.zigbee2mqtt.io/devices/TRVZB.html
 
-## Wiring
+- BEOK BOT-R15W 
+    - https://de.beok-controls.com/room-thermostat/gas-boiler-heating-thermostat/wired-gas-boiler-thermostats-bot-r15w-zigbee.html 
+    - https://de.beok-controls.com/uploads/34945/files/BOT-R15W-ZIGBEE-Gas-Boiler-Thermostat-Manual.pdf
+    - https://www.zigbee2mqtt.io/devices/BOT-R15W.html
 
-### DHT22 Sensor (espfan.yaml)
+- SZ-T04 desk sensor (generic)
+    - https://www.zigbee2mqtt.io/devices/SZ-T04.html
 
-- **VCC** (Pin 1) → ESP32 3.3V
-- **Data** (Pin 2) → GPIO22
-- **GND** (Pin 4) → ESP32 GND
-- Add a 10kΩ pull-up resistor between VCC and Data (or use DHT22 module with built-in resistor)
+## VTherm1 Configuration (Overview)
+- Type: `over_climate` (Versatile Thermostat controls underlying climate devices)
+- Underlying devices: `climate.TRVZB_vorne`, `climate.TRVZB_hinten`
+- Reference sensor: `sensor.desk_temperature` (indoor SZ-T04)
+- Entity name: `climate.vtherm1`
+- Setpoint sync: Handled by automations in `sync_thermostats.yaml` between `climate.vtherm1` and `climate.beok_thermostat`.
+- Notes:
+  - Physical TRV dial changes are followed by VTherm via the “follow underlying” feature.
+  - VTherm regulates TRV setpoints; TRVs are not fed an external temperature directly via Zigbee2MQTT.
+  - Time filtering and other VTherm features are configured in HA (UI), not tracked in this repo.
 
-### BME280 Sensor (espfan_bme280.yaml)
 
-- **VCC** → ESP32 3.3V
-- **GND** → ESP32 GND
-- **SDA** → GPIO21
-- **SCL** → GPIO22
-- Note: Most BME280 modules have pull-up resistors already included
-- Default I2C address is 0x76 (some modules use 0x77)
-
-### Fan Connections (typical 4-pin PWM fans)
-
-Each fan has 4 wires:
-1. **Black** (black) - Ground (GND) → Connect to 12V power supply GND and ESP32 GND
-2. **Red** (yellow) - +12V → Connect to 12V power supply positive
-3. **Yellow** (green) - Tachometer signal → Connect to GPIO26 (Fan 1) or GPIO27 (Fan 2)
-4. **Blue** (blue) - PWM control → Connect both fans' PWM wires together to GPIO25
-
-### Power Supply
-
-The system is powered from a single 12V power supply:
-
-```
-12V Power Supply (2-4A recommended)
-    ├─[+12V]─→ Fan 1 & Fan 2 (Red wires)
-    ├─[+12V]─→ Buck Converter IN+
-    └─[GND]──→ Buck Converter GND, Fans (Black), ESP32 GND, Sensors GND
-                    ↓
-              Buck Converter (12V → 5V, MP2315/XL4015/LM2596)
-                    ↓
-              [5V OUT]─→ ESP32 VIN/5V pin (NOT 3.3V pin!)
-              [GND]────→ ESP32 GND
-```
-
-**Important Power Notes:**
-- **Use a buck converter** (not linear regulator) for efficiency and low heat
-- Set buck converter output to exactly **5.0V** before connecting ESP32 (verify with multimeter)
-- Connect 5V to ESP32's **VIN or 5V pin**, never to the 3.3V pin (it's an output!)
-- **Common ground is critical** - connect all GND points together
-- ESP32 power consumption: ~100-200mA typical, peaks to ~500mA during WiFi
-- Do NOT connect USB and VIN power simultaneously
-- Total system power: ~1-3A depending on fan load
-
-**Buck Converter Setup:**
-1. Connect 12V input to buck converter
-2. Adjust output potentiometer to exactly 5.0V (measure with multimeter)
-3. Disconnect 12V input
-4. Connect output to ESP32 VIN pin
-5. Reconnect 12V input and verify voltage is still 5.0V
-
-**Power Supply Sizing:**
-- Each 12V fan typically draws 0.1-0.5A at full speed
-- ESP32 draws ~0.2A average
-- Recommended minimum: 12V 2A power supply
-- For two high-power fans: 12V 3-4A power supply
-
-- **12V Power Supply**: Powers both fans (connect Red and Black wires)
-- **ESP32**: Powered via USB or separate 5V supply
-- **Important**: Connect ESP32 GND to 12V power supply GND for common ground
-
-### Circuit Notes
-
-- The tachometer signals are typically open-collector outputs that pull to ground
-- Internal pullups are enabled on GPIO26 and GPIO27
-- PWM frequency is set to 25kHz (standard for PC fans)
-- Both fans share the same PWM signal, so they run at the same speed
-
-## Home Assistant Integration
-
-Once flashed and connected, the following entities will be available:
-
-### Sensors
-- **Temperature**: Current temperature reading from sensor
-- **Humidity**: Current humidity reading from sensor
-- **Pressure**: Current pressure reading (BME280 variant only)
-- **Fan 1 RPM**: Real-time RPM sensor for first fan
-- **Fan 2 RPM**: Real-time RPM sensor for second fan
-
-### Controls
-- **Fan**: On/Off switch and speed control (0-100%) - used in Manual mode
-- **Auto Mode**: Switch to toggle between Auto and Manual mode
-
-### Operating Modes
-
-**Manual Mode** (Auto Mode switch OFF):
-- Full manual control via Home Assistant
-- Use the Fan entity to control on/off and speed (0-100%)
-
-**Auto Mode** (Auto Mode switch ON):
-- Fan speed automatically controlled by temperature
-- Temperature-based control curve:
-  - ≤30°C: Fan off (0%)
-  - 30°C - 45°C: Linear increase (0% to 100%)
-  - ≥45°C: Full speed (100%)
-- Includes 2°C hysteresis to prevent rapid on/off cycling
-- Manual fan controls are overridden
-
-## Configuration
-
-All configurations can be adjusted via the `substitutions` section in the YAML files:
-
-```yaml
-substitutions:
-  temp_min: "30.0"          # Temperature where fan starts (°C)
-  temp_max: "45.0"          # Temperature where fan reaches 100% (°C)
-  temp_hysteresis: "2.0"    # Prevents rapid on/off cycling (°C)
-  rpm_multiplier: "0.5"     # RPM calculation factor
-```
-
-### RPM Multiplier
-
-The `rpm_multiplier` depends on your fan's tachometer signal:
-- **2 pulses per revolution**: Use `0.5` (most common)
-- **1 pulse per revolution**: Use `1.0`
-- **4 pulses per revolution**: Use `0.25`
-
-To find your fan's pulse rate:
-1. Set `rpm_multiplier: "1.0"`
-2. Note the RPM reading in Home Assistant
-3. Compare with the fan's rated RPM (usually printed on the fan)
-4. Adjust multiplier: `correct_multiplier = rated_rpm / measured_rpm`
-
-## Setup
-
-1. Choose the appropriate YAML file:
-   - `espfan.yaml` for DHT22 sensor
-   - `espfan_bme280.yaml` for BME280 sensor
-2. Edit `secrets.yaml` with your WiFi credentials and passwords
-3. (Optional) Adjust temperature thresholds and other settings in substitutions
-4. Flash the ESP32 using ESPHome:
-   ```bash
-   esphome run espfan.yaml
-   # or
-   esphome run espfan_bme280.yaml
-   ```
-5. Add the device to Home Assistant via the API integration (should be auto-discovered)
-
-## Troubleshooting
-
-### Fan RPM reads incorrectly
-- Adjust the `rpm_multiplier` substitution (see Configuration section)
-- Verify tachometer wire is connected correctly
-- Some fans may need a stronger pull-up resistor
-
-### BME280 not detected
-- Check I2C wiring (SDA/SCL)
-- Try changing address from `0x76` to `0x77` in the YAML file
-- Enable I2C scanning in logs to see detected addresses
-
-### Temperature sensor not responding
-- **DHT22**: Verify pull-up resistor is present (10kΩ)
-- **BME280**: Confirm I2C address and wiring
-- Check sensor power supply (3.3V)
-
-### Fan doesn't turn off in auto mode
-- Check that temperature is below `temp_min` minus `temp_hysteresis`
-- Verify Auto Mode switch is ON in Home Assistant
