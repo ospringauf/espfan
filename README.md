@@ -63,6 +63,14 @@ Device-specific manuals / references
 - SZ-T04 desk sensor (generic)
     - https://www.zigbee2mqtt.io/devices/SZ-T04.html
 
+- ZTH11 outdoor temperatur/humidity sensor (IP65, no display)
+    - indentifed in Z2M as [Tuya TS0601_temperature_humidity_sensor_2](https://www.zigbee2mqtt.io/devices/TS0601_temperature_humidity_sensor_2.html)    
+    - https://manuals.plus/ae/1005009682066497
+
+- WSD500A indoor temperatur/humidity sensor (no display)
+    - https://www.zigbee2mqtt.io/devices/WSD500A.html#tuya-wsd500a
+    - manual: https://ae01.alicdn.com/kf/Seeb674fd88e743d092611304d4d7b03ao.pdf
+
 ## VTherm1 Configuration (Overview)
 - Type: `over_climate` (Versatile Thermostat controls underlying climate devices)
 - Underlying devices: `climate.TRVZB_vorne`, `climate.TRVZB_hinten`
