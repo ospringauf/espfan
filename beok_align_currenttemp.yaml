@@ -1,8 +1,8 @@
 alias: beok_align_currenttemp
-description: ""
+description: calibrate BEOK thermostat to show current temperature of external sensor
 triggers:
   - platform: state
-    entity_id: sensor.desk_temperature
+    entity_id: sensor.indoor_temperature
     for: "00:00:05"
   - platform: state
     entity_id: climate.beok_thermostat
@@ -11,7 +11,7 @@ triggers:
 conditions:
   - condition: template
     value_template: >-
-      {{ (states('sensor.desk_temperature') | float -
+      {{ (states('sensor.indoor_temperature') | float -
       (state_attr('climate.beok_thermostat','current_temperature') | float) ) |
       abs >= 0.1 }}
 actions:
@@ -20,7 +20,7 @@ actions:
     data:
       value: >-
         {{ ((states('number.beok_thermostat_local_temperature_calibration') |
-        float) + (states('sensor.desk_temperature') | float) -
+        float) + (states('sensor.indoor_temperature') | float) -
         (state_attr('climate.beok_thermostat','current_temperature') | float)) |
         round(1) }}
     action: input_number.set_value
