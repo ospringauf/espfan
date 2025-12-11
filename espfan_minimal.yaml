@@ -43,7 +43,11 @@ captive_portal:
 web_server:
   port: 80
 
-# PWM output for fan speed control
+power_supply:
+  - id: mosfet_power_supply
+    pin: GPIO33
+
+# GPIO output for MOSFET power switch (enable/disable fans completely)
 output:
   - platform: ledc
     pin: GPIO25
@@ -52,13 +56,16 @@ output:
     min_power: ${fan_min_power}  # Minimum 20% - fan won't spin below this
     max_power: 1.0
     zero_means_zero: true  # Ensure 0% truly turns output off
+    power_supply: mosfet_power_supply
 
-# Fan control with speed
+
+# Fan control with speed and power enable
 fan:
   - platform: speed
     output: fan_pwm
     name: "Fan"
     id: fan_control
+
 
 # DHT22 Temperature and Humidity Sensor
 sensor:
