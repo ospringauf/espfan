@@ -1,4 +1,4 @@
-# Apartment Temperature Control
+# Home Automation - Temperature Control
 
 This repository contains configuration and documentation for an apartment temperature control system built around Home Assistant, Zigbee thermostats (TRVs), a BEOK display thermostat, and an ESP32-based fan controller running ESPHome.
 
