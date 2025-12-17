@@ -1,5 +1,6 @@
 # ESPHome
 secrets.yaml
+**/secrets.yaml
 
 # Build artifacts
 .esphome/

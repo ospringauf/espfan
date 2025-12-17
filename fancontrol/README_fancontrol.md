@@ -2,8 +2,6 @@
 
 ESPHome-based fan controller for two 12V PWM fans integrated with Home Assistant.
 
-!!! Disclaimer: this is work in progress, not fully tested, mostly AI generated !!!
-
 ## Hardware
 
 ### Components Used
@@ -33,6 +31,8 @@ The P-channel MOSFET high-side switch is **essential** for this design. Testing 
 | GPIO2 | DHT22 Data | DHT22 sensor data pin | Strapping pin, safe for DHT22 after boot |
 | GPIO3 | Tachometer 1 | Fan 1 tacho wire | Internal pullup enabled |
 | GPIO4 | Tachometer 2 | Fan 2 tacho wire | Internal pullup enabled |
+| 5V | Power | MP2315 buck converter OUT+ → ESP32‑C3 5V pin | Set to exactly 5.0V |
+| GND | Common ground | Fans GND, ESP32‑C3 GND, MP2315 GND, DHT22 GND | Common ground is critical |
 
 ## Wiring
 
@@ -125,7 +125,8 @@ The system is powered from a single 12V power supply:
 - PWM frequency is set to 25kHz (standard for 4-pin PWM fans)
 - Both fans share the same PWM signal, so they run at the same speed
 - The 10kΩ pullup resistor keeps the MOSFET OFF during ESP32-C3 boot/reset
-- GPIO0 is a strapping pin; fans may briefly turn on during boot (unavoidable)
+- GPIO0 is a strapping pin; fans may briefly turn on during boot (expected behavior)
+- TL‑C14CW fans use 2 pulses per revolution → `rpm_multiplier: "0.5"`
 
 ### WiFi Antenna Fix
 

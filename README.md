@@ -1,6 +1,6 @@
 # Home Automation - Temperature Control
 
-This repository contains configuration and documentation for an apartment temperature control system built around Home Assistant, Zigbee thermostats (TRVs), a BEOK display thermostat, and an ESP32-based fan controller running ESPHome.
+This repository contains configuration and documentation for an apartment temperature control system built around Home Assistant, Zigbee thermostats (TRVs), a BEOK display thermostat, and an ESP32‑C3–based fan controller running ESPHome.
 
 Purpose
 - Centralize climate control for two radiator TRVs
@@ -12,7 +12,7 @@ Hardware (physical devices)
 - BEOK BOT-R15W thermostat (`climate.beok_thermostat`) — used as a user interface only
 - SZ-T04 desk temperature sensor (`sensor.desk_temperature`) — used as the indoor reference sensor
 - Two 14cm PWM PC fans (tacho + PWM) mounted on the radiators (powered from 12V supply)
-- ESP32 development board running ESPHome (controls fans and reports temperature/RPM)
+- ESP32‑C3 Super Mini running ESPHome (controls fans and reports temperature/RPM)
 - Raspberry Pi 5 running Home Assistant and Zigbee coordinator (Sonoff Zigbee dongle)
 
 Software stack
@@ -41,8 +41,8 @@ Control logic summary
 - A future outdoor sensor may be integrated and fed into VTherm1 as required.
 
 Notes about the fans and ESPHome
-- The ESP32 runs `espfan.yaml` / `espfan_bme280.yaml` for the fan controller; that documentation (wiring, substitutions, RPM multiplier, etc.) is in `README_fancontrol.md` and the `espfan*.yaml` files.
-- Both fans share the same PWM output (GPIO25) and therefore run at the same speed. 
+- The ESP32‑C3 runs `fancontrol/espfan.yaml` for the fan controller; detailed documentation (wiring, substitutions, RPM multiplier, WiFi antenna fix, etc.) is in `fancontrol/README_fancontrol.md`.
+- Both fans share the same PWM output (GPIO1) and therefore run at the same speed. 
 
 Links and manuals
 - Versatile Thermostat (integration): https://github.com/jmcollin78/versatile_thermostat
