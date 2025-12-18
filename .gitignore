@@ -1,6 +1,7 @@
 # ESPHome
 secrets.yaml
 **/secrets.yaml
+**/espfan-circuit-backups/
 
 # Build artifacts
 .esphome/
