@@ -1,0 +1,169 @@
+# This is an example configuration for an ESPHome firmware to measure the
+# current power and overall energy consumption using a Ferraris electricity
+# meter
+
+# In this variant, the analog output A0 of the TCRT5000 module is used as
+# input for the rotation observation of the turntable.
+
+# generic configuration (to be adapted)
+esphome:
+  name: ferraris-meter
+  friendly_name: Stromzähler
+  project:
+    name: jensrossbach.ferraris_meter
+    version: 1.5.1
+
+# example ESP8266 firmware (can be replaced by appropriate configuration)
+esp8266:
+  board: esp01_1m
+
+# include Ferraris component (mandatory)
+external_components:
+  - source: github://jensrossbach/esphome-ferraris-meter@v1.5.1
+    components: [ferraris]
+
+# enable logging (optional)
+logger:
+  level: INFO
+
+# enable Home Assistant API (mandatory if used with Home Assistant, alternatively configure MQTT)
+api:
+  encryption:
+    key: !secret ha_api_key
+
+# enable over-the-air updates (recommended)
+ota:
+  - platform: esphome
+    password: !secret ota_password
+
+# enable Wi-Fi (mandatory)
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+  # enable fallback hotspot (captive portal) in case Wi-Fi connection fails
+  ap:
+    ssid: Ferraris Meter Fallback Hotspot
+    password: !secret fallback_hs_password
+
+# needed for fallback hotspot (see above)
+captive_portal:
+
+# Ferraris component (mandatory)
+ferraris:
+  id: ferraris_meter
+  analog_input: adc_input
+  analog_threshold: adc_threshold
+  energy_start_value: last_energy_value
+
+# numeric sensors
+sensor:
+  - platform: ferraris
+    # sensor for current power consumption
+    power_consumption:
+      name: Momentanverbrauch
+    # sensor for energy meter reading
+    energy_meter:
+      name: Verbrauchszähler
+    # diagnostic sensor showing analog value spectrum determined during last automatic analog calibration
+    analog_value_spectrum:
+      name: Analoge Bandbreite
+  # sensor for analog input signal
+  - platform: adc
+    id: adc_input
+    pin: GPIO17  # ADC pin of ESP8266
+    internal: true
+    raw: true
+    samples: 10
+    update_interval: 50ms
+  # sensor for Wi-Fi signal strength
+  - platform: wifi_signal
+    name: Wi-Fi Signal
+    update_interval: 60s
+
+# binary sensors
+binary_sensor:
+  - platform: ferraris
+    # diagnostic sensor indicating detected rotation during calibration mode
+    rotation_indicator:
+      name: Umdrehungsindikator
+    # diagnostic sensor indicating if the automatic analog calibration is currently running
+    analog_calibration_state:
+      name: Status Analoge Kalibrierung
+    # diagnostic sensor indicating if the last automatic analog calibration was successful or failed
+    analog_calibration_result:
+      name: Ergebnis Analoge Kalibrierung
+  # diagnostic sensor for wireless connection status
+  - platform: status
+    name: Status
+
+# text sensors
+text_sensor:
+  - platform: wifi_info
+    # diagnostic sensor providing the IP address of the ESP microcontroller
+    ip_address:
+      name: IP Adresse
+
+# number components
+number:
+  # import entity holding last energy meter reading from Home Assistant
+  - platform: homeassistant
+    id: last_energy_value
+    entity_id: input_number.stromzaehler_letzter_wert
+  # number used to configure and calibrate the analog threshold
+  - platform: template
+    id: adc_threshold
+    name: ADC Schwellwert
+    icon: mdi:speedometer-slow
+    entity_category: config
+    mode: box
+    optimistic: true
+    initial_value: 50
+    min_value: 0
+    max_value: 1000
+    step: 1
+  # number used to manually overwrite the energy meter
+  - platform: template
+    id: target_energy_value
+    name: Manueller Zählerstand
+    icon: mdi:counter
+    unit_of_measurement: kWh
+    device_class: energy
+    entity_category: config
+    mode: box
+    optimistic: true
+    min_value: 0
+    max_value: 1000000
+    step: 0.01
+
+# switch components
+switch:
+  - platform: ferraris
+    # diagnostic switch used to activate or deactivate the calibration mode
+    calibration_mode:
+      name: Kalibrierungsmodus
+
+# button components
+button:
+  # button used to trigger the manual overwriting of the energy meter
+  - platform: template
+    name: Verbrauchszähler überschreiben
+    icon: mdi:download
+    entity_category: config
+    on_press:
+      - ferraris.set_energy_meter:
+          id: ferraris_meter
+          value: !lambda |-
+            float val = id(target_energy_value).state;
+            return (val >= 0) ? val : 0;
+  # diagnostic button used to trigger automatic calibration of analog signal from infrared sensor
+  - platform: template
+    name: Auto-Kalibrierung starten
+    icon: mdi:auto-fix
+    entity_category: diagnostic
+    on_press:
+      - ferraris.start_analog_calibration:
+          id: ferraris_meter
+          num_captured_values: 6000
+          min_level_distance: 6.0
+          max_iterations: 3
