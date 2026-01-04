@@ -16,14 +16,10 @@ esp32:
 
 
 # include Ferraris component (mandatory)
-# external_components:
-#   - source: github://jensrossbach/esphome-ferraris-meter@v1.5.1
-#     components: [ferraris]
-
 external_components:
-  - source: github://ospringauf/esphome-ferraris-meter@fix-esp32c3
+  - source: github://jensrossbach/esphome-ferraris-meter@v1.5.2
     components: [ferraris]
-
+    
 # external_components:
 #   - source: 
 #       type: local
