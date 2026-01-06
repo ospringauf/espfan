@@ -25,6 +25,7 @@ action:
     target:
       entity_id: input_boolean.guard_sync_thermostats
   - service: climate.set_temperature
+    continue_on_error: true
     target:
       entity_id: climate.beok_thermostat
     data:
@@ -33,6 +34,7 @@ action:
       {{ (state_attr('climate.beok_thermostat','temperature')|float) ==
       (state_attr('climate.vtherm1','temperature')|float) }}
     timeout: "00:00:05"
+    continue_on_error: true
   - service: input_boolean.turn_off
     target:
       entity_id: input_boolean.guard_sync_thermostats
@@ -59,6 +61,7 @@ action:
     target:
       entity_id: input_boolean.guard_sync_thermostats
   - service: climate.set_temperature
+    continue_on_error: true
     target:
       entity_id: climate.vtherm1
     data:
@@ -67,6 +70,7 @@ action:
       {{ (state_attr('climate.vtherm1','temperature')|float) ==
       (state_attr('climate.beok_thermostat','temperature')|float) }}
     timeout: "00:00:05"
+    continue_on_error: true
   - service: input_boolean.turn_off
     target:
       entity_id: input_boolean.guard_sync_thermostats

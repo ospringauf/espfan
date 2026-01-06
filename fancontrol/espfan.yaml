@@ -10,13 +10,19 @@ esp32:
 
 
 # Substitutions for easy configuration
+# Fan type: Arctic P14 Slim PWM PST (3x)
 substitutions:
-  temp_min: "30.0"  # Temperature at which fan starts (0% speed)
-  temp_max: "45.0"  # Temperature at which fan reaches 100% speed
+  temp_min: "34.0"  # Temperature at which fan starts (0% speed)
+  temp_max: "60.0"  # Temperature at which fan reaches 100% speed
   temp_hysteresis: "2.0"  # Temperature hysteresis to prevent rapid cycling
-  rpm_multiplier: "0.5"  # RPM calculation multiplier (typically 0.5 for 2 pulses/rev)
+  rpm_multiplier: "0.25"  # RPM calculation multiplier (typically 0.5 for 2 pulses/rev)
   fan_min_power: "0.20"  # Minimum PWM power (20%) - prevents fan buzzing at low speeds
-  update_interval: "60s"  # Sensor update interval
+  update_interval: "30s"  # Sensor update interval
+
+  # # Fan type: Thermalright TL-C14CW-S
+  # rpm_multiplier: "0.5"  # RPM calculation multiplier (typically 0.5 for 2 pulses/rev)
+  # fan_min_power: "0.20"  # Minimum PWM power (20%) - prevents fan buzzing at low speeds
+  # update_interval: "60s"  # Sensor update interval
 
 # Enable logging
 logger:
