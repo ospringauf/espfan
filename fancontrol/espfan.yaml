@@ -15,7 +15,7 @@ substitutions:
   temp_min: "34.0"  # Temperature at which fan starts (0% speed)
   temp_max: "60.0"  # Temperature at which fan reaches 100% speed
   temp_hysteresis: "2.0"  # Temperature hysteresis to prevent rapid cycling
-  rpm_multiplier: "0.25"  # RPM calculation multiplier (typically 0.5 for 2 pulses/rev)
+  rpm_multiplier: "0.5"  # RPM calculation multiplier (typically 0.5 for 2 pulses/rev)
   fan_min_power: "0.20"  # Minimum PWM power (20%) - prevents fan buzzing at low speeds
   update_interval: "30s"  # Sensor update interval
 
@@ -142,9 +142,9 @@ sensor:
     id: fan1_rpm
     unit_of_measurement: 'RPM'
     accuracy_decimals: 0
+    use_pcnt: false  # Disable hardware PCNT to allow larger internal_filter
+    internal_filter: 500us  # Software glitch filter (requires use_pcnt: false)
     update_interval: 60s
-    # Ignore very short pulses caused by PWM noise
-    # internal_filter: 300us
     # Smooth the RPM a bit
     filters:
       - sliding_window_moving_average:
