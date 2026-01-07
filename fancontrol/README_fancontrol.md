@@ -7,7 +7,8 @@ ESPHome-based fan controller for two 12V PWM fans integrated with Home Assistant
 ### Components Used
 
 - **Microcontroller**: ESP32-C3 Super Mini board
-- **Fans**: 2x Thermalright TL-C14CW (14cm, 4-pin PWM, max 0.13A each)
+- ~~**Fans**: 2x Thermalright TL-C14CW (14cm, 4-pin PWM, max 0.13A each)~~
+-- **Fans**: 3x Arctic P14 Slim PWM PST (120-1800 rpm, 0.19A, 12V, 4-pin)
 - **Temperature Sensor**: DHT22 (temperature and humidity)
 - **Buck Converter**: MP2315 (12V → 5V, 3A, ~95% efficiency)
 - **MOSFET**: NDP6020P (P-channel, high-side switch)
@@ -17,6 +18,13 @@ ESPHome-based fan controller for two 12V PWM fans integrated with Home Assistant
   - 10kΩ (MOSFET gate pullup)
 - **Power Supply**: 12V 2-4A (sufficient for two fans + ESP32)
 - **WiFi Antenna**: 31mm wire soldered to "0" side of onboard antenna (see WiFi notes below)
+
+### TODO
+
+Tacho line low-pass filter:
+
+- Add 10k to 3.3V on the tacho line near the ESP32.
+- Add 100nF to GND near the ESP32 (this plus the pull-up makes a low-pass and kills short spikes).
 
 ### Why High-Side Switching?
 

@@ -24,6 +24,7 @@ substitutions:
   # fan_min_power: "0.20"  # Minimum PWM power (20%) - prevents fan buzzing at low speeds
   # update_interval: "60s"  # Sensor update interval
 
+
 # Enable logging
 logger:
 
@@ -132,32 +133,24 @@ sensor:
     update_interval: ${update_interval}
 
   - platform: pulse_counter
-    pin: 
+    pin:
       number: GPIO3
       mode:
         input: true
         pullup: true
-    name: "Fan 1 RPM"
+    name: "Fan RPM"
     id: fan1_rpm
     unit_of_measurement: 'RPM'
     accuracy_decimals: 0
-    update_interval: ${update_interval}
+    update_interval: 60s
+    # Ignore very short pulses caused by PWM noise
+    # internal_filter: 300us
+    # Smooth the RPM a bit
     filters:
-      - multiply: ${rpm_multiplier}  # Adjust based on your fan's pulses per revolution
-    
-  - platform: pulse_counter
-    pin: 
-      number: GPIO4
-      mode:
-        input: true
-        pullup: true
-    name: "Fan 2 RPM"
-    id: fan2_rpm
-    unit_of_measurement: 'RPM'
-    accuracy_decimals: 0
-    update_interval: ${update_interval}
-    filters:
-      - multiply: ${rpm_multiplier}  # Adjust based on your fan's pulses per revolution
+      - sliding_window_moving_average:
+          window_size: 3
+          send_every: 1
+      - multiply: ${rpm_multiplier}
 
 # Mode selection switch (Auto/Manual)
 switch:
