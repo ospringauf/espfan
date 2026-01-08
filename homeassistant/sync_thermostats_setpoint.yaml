@@ -1,0 +1,59 @@
+---
+# Sync target temperatures between two thermostats:
+# - climate.vtherm1
+# - climate.beok_thermostat
+# Uses `input_boolean.guard_sync_thermostats` as a guard to prevent trigger loops.
+
+alias: sync_thermostats_setpoint
+description: Sync setpoint changes between climate.vtherm1 and climate.beok_thermostat
+triggers:
+  - trigger: state
+    entity_id:
+      - climate.vtherm1
+      - climate.beok_thermostat
+    attribute: temperature
+conditions:
+  - condition: state
+    entity_id: input_boolean.guard_sync_thermostats
+    state: "off"
+  - condition: template
+    value_template: >-
+      {{ trigger.from_state is not none and
+      (trigger.from_state.attributes.temperature | float(0) -
+      trigger.to_state.attributes.temperature | float(0)) | abs > 0.1 }}
+actions:
+  - variables:
+      source: "{{ trigger.entity_id }}"
+      target: >-
+        {% if trigger.entity_id == 'climate.vtherm1' %}
+          climate.beok_thermostat
+        {% else %}
+          climate.vtherm1
+        {% endif %}
+  - target:
+      entity_id: input_boolean.guard_sync_thermostats
+    action: input_boolean.turn_on
+  - delay: "00:00:05"
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: >-
+              {{ (state_attr(target,'temperature') | float(0) -
+              state_attr(source,'temperature') | float(0)) | abs > 0.1 }}
+        sequence:
+          - continue_on_error: true
+            target:
+              entity_id: "{{ target }}"
+            data:
+              temperature: "{{ state_attr(source,'temperature') }}"
+            action: climate.set_temperature
+          - wait_template: >-
+              {{ (state_attr(target,'temperature') | float(0) -
+              state_attr(source,'temperature') | float(0)) | abs < 0.05 }}
+            timeout: "00:00:10"
+            continue_on_error: true
+  - delay: "00:00:01"
+  - target:
+      entity_id: input_boolean.guard_sync_thermostats
+    action: input_boolean.turn_off
+mode: single
